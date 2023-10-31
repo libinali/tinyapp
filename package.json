@@ -16,5 +16,8 @@
   "bugs": {
     "url": "https://github.com/libinali/tinyapp/issues"
   },
-  "homepage": "https://github.com/libinali/tinyapp#readme"
+  "homepage": "https://github.com/libinali/tinyapp#readme",
+  "dependencies": {
+    "express": "^4.18.2"
+  }
 }
