@@ -32,8 +32,15 @@ app.get("/urls/new", (req, res) => {
 });
 
 app.post("/urls", (req, res) => {
-  console.log(req.body); // Log the POST request body to the console
-  res.send("Ok"); // Respond with 'Ok' (we will replace this)
+  const newKey = generateRandomString();
+  urlDatabase[newKey] = req.body.longURL;
+  res.redirect(`/urls/${newKey}`)
+});
+
+app.get("/u/:id", (req, res) => {
+  const id = req.params.id;
+  const longURL = urlDatabase[id];
+  res.redirect(longURL);
 });
 
 function generateRandomString() {
@@ -49,8 +56,9 @@ function generateRandomString() {
 }
 
 app.get("/urls/:id", (req, res) => {
-  const shortId = req.params.id;
-  const templateVars = { id: shortId, longURL: urlDatabase[shortId] };
+  const id = req.params.id;
+  const longURL = urlDatabase[id];
+  const templateVars = { id, longURL };
   res.render("urls_show", templateVars);
 });
 
