@@ -19,6 +19,11 @@
       </div>
     </div>
     <form action="/login" method="POST">
+      <label for="username">
+        <% if (username) { %>
+          <span>Logged in as: <%= username %>!</span>
+        <% } %>
+      </label>
       <input type="text" name="username" placeholder="Username">
       <button type="submit" class="btn btn-outline-dark">Login</button>
     </form>
