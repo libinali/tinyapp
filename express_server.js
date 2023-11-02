@@ -37,16 +37,29 @@ app.post("/urls", (req, res) => {
   res.redirect(`/urls/${newKey}`)
 });
 
-app.post("/urls/:id/delete", (req, res) => {
-  id = req.params.id;
-  delete urlDatabase[id];
-  res.redirect("/urls");
-});
-
 app.get("/u/:id", (req, res) => {
   const id = req.params.id;
   const longURL = urlDatabase[id];
   res.redirect(longURL);
+});
+
+app.get("/urls/:id", (req, res) => {
+  const id = req.params.id;
+  const longURL = urlDatabase[id];
+  const templateVars = { id, longURL };
+  res.render("urls_show", templateVars);
+});
+
+app.post("/urls/:id/delete", (req, res) => {
+  const id = req.params.id;
+  delete urlDatabase[id];
+  res.redirect("/urls");
+});
+
+app.post("/urls/:id/update", (req, res) => {
+  const id = req.params.id;
+  urlDatabase[id] = req.body.longURL;
+  res.redirect("/urls")
 });
 
 function generateRandomString() {
@@ -60,13 +73,6 @@ function generateRandomString() {
 
   return randomString;
 }
-
-app.get("/urls/:id", (req, res) => {
-  const id = req.params.id;
-  const longURL = urlDatabase[id];
-  const templateVars = { id, longURL };
-  res.render("urls_show", templateVars);
-});
 
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
