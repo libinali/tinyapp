@@ -25,12 +25,16 @@ app.get("/hello", (req, res) => {
 });
 
 app.get("/urls", (req, res) => {
-  const templateVars = { urls: urlDatabase, username: req.cookies["username"]};
+  const userID = req.cookies.user_id;
+  const user = users[userID];
+  const templateVars = { urls: urlDatabase, user };
   res.render("urls_index", templateVars);
 });
 
 app.get("/urls/new", (req, res) => {
-  const templateVars = { username: req.cookies["username"] };
+  const userID = req.cookies.user_id;
+  const user = users[userID];
+  const templateVars = { user };
   res.render("urls_new", templateVars);
 });
 
@@ -49,7 +53,9 @@ app.get("/u/:id", (req, res) => {
 app.get("/urls/:id", (req, res) => {
   const id = req.params.id;
   const longURL = urlDatabase[id];
-  const templateVars = { id, longURL, username: req.cookies["username"], };
+  const userID = req.cookies.user_id;
+  const user = users[userID];
+  const templateVars = { id, longURL, user};
   res.render("urls_show", templateVars);
 });
 
@@ -78,19 +84,44 @@ function generateRandomString() {
 }
 
 app.post("/login", (req, res) => {
-  res.cookie('username', req.body.username);
+  res.cookie('user_id', req.body.username);
   res.redirect("/urls");
 });
 
 app.post("/logout", (req, res) => {
-  res.clearCookie("username");
+  res.clearCookie('user_id');
   res.redirect("/urls");
 });
 
 app.get("/register", (req, res) => {
   res.render("register");
-})
+});
 
+const users = {
+  userRandomID: {
+    id: "Lighthouse Labs",
+    email: "a@a.com",
+    password: "123",
+  },
+  user2RandomID: {
+    id: "Libin",
+    email: "b@b.com",
+    password: "456",
+  },
+};
+
+app.post("/register", (req, res) => {
+  const newId = generateRandomString();
+  const newUser = {
+    id: newId,
+    email: req.body.email,
+    password: req.body.password,
+  };
+  users[newId] = newUser;
+  console.log(users);
+  res.cookie('user_id', newId);
+  res.redirect("/urls");
+});
 
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
