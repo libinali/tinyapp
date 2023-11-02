@@ -1,9 +1,11 @@
 const express = require("express");
+const morgan = require("morgan")
 const app = express();
-const cookieParser = require('cookie-parser');
+const cookieParser = require("cookie-parser");
 const PORT = 8080; // default port 8080
 
 app.set("view engine", "ejs");
+app.use(morgan('dev'));
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
@@ -36,6 +38,20 @@ app.get("/urls/new", (req, res) => {
   const user = users[userID];
   const templateVars = { user };
   res.render("urls_new", templateVars);
+});
+
+app.get("/register", (req, res) => {
+  const userID = req.cookies.user_id;
+  const user = users[userID];
+  const templateVars = { user };
+  res.render("register", templateVars);
+});
+
+app.get("/login", (req, res) => {
+  const userID = req.cookies.user_id;
+  const user = users[userID];
+  const templateVars = { user };
+  res.render("login", templateVars);
 });
 
 app.post("/urls", (req, res) => {
@@ -84,17 +100,26 @@ function generateRandomString() {
 }
 
 app.post("/login", (req, res) => {
-  res.cookie('user_id', req.body.username);
+  const email = req.body.email;
+  const password = req.body.password;
+
+  const user = getUserByEmail(email);
+
+  if (!user) {
+    return res.status(403).send("User Not Found");
+  }
+
+  if (user.password !== password) {
+    return res.status(403).send("Incorrect Password")
+  }
+
+  res.cookie('user_id', user.id);
   res.redirect("/urls");
 });
 
 app.post("/logout", (req, res) => {
   res.clearCookie('user_id');
-  res.redirect("/urls");
-});
-
-app.get("/register", (req, res) => {
-  res.render("register");
+  res.redirect("/login");
 });
 
 const users = {
@@ -110,8 +135,34 @@ const users = {
   },
 };
 
+// FIND BY EMAIL HELPER FUNCTION
+const getUserByEmail = function(email) {
+  for (const newAcc in users) {
+    if (users[newAcc].email === email) {
+      return users[newAcc];
+    }
+  }
+  return null;
+};
+
 app.post("/register", (req, res) => {
   const newId = generateRandomString();
+  const email = req.body.email;
+  const password = req.body.password;
+
+   // Checks if the e-mail or password are empty strings 
+  if (email === '' || password === '') {
+    return res.status(400).send("Email and password cannot be empty");
+  }
+
+  // Checks the function to see if the user exists
+  const existingId = getUserByEmail(email);
+
+  if (existingId) {
+    return res.status(400).send("Email is already in use");
+  }
+
+ // CREATING A NEW USER
   const newUser = {
     id: newId,
     email: req.body.email,
@@ -119,6 +170,7 @@ app.post("/register", (req, res) => {
   };
   users[newId] = newUser;
   console.log(users);
+
   res.cookie('user_id', newId);
   res.redirect("/urls");
 });
