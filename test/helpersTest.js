@@ -5,20 +5,20 @@ const { getUserByEmail, urlsForUser } = require('../helpers.js');
 // getUserByEmail Test
 const testUsers = {
   "Kiki": {
-    id: "Kiki", 
-    email: "kiki@me.com", 
+    id: "Kiki",
+    email: "kiki@me.com",
     password: "purple-monkey-dinosaur"
   },
   "Bobo": {
-    id: "Bobo", 
-    email: "Bobo@me.com", 
+    id: "Bobo",
+    email: "Bobo@me.com",
     password: "dishwasher-funk"
   }
 };
 
 describe('getUserByEmail', function() {
   it('should return a user with valid email', () => {
-    const user = getUserByEmail("kiki@me.com", testUsers)
+    const user = getUserByEmail("kiki@me.com", testUsers);
     const expectedUserID = "Kiki";
     assert.equal(user.id, expectedUserID);
   });

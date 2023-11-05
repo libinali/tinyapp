@@ -12,12 +12,16 @@
 </head>
 <body>
   <%- include('partials/_header') -%>
-  <h2>Create Account</h2>
-  <form action="/register" method="POST">
-    <p>Email Address <input type="email" name="email" placeholder="Enter email"></p>
-    <p>Password <input type="password" name="password" placeholder="Password"></p>
-    <button type="submit" class="btn btn-primary">Register</button>
-  </form>
+  <main style="margin: 1em;">
+    <h2>Create Account</h2>
+    <form action="/register" method="POST">
+      <label for="email">Email address</label>
+      <input class="form-control mb-3" type="email" name="email" placeholder="Enter email" style="width: 300px">
+      <label for="password">Password</label>
+      <input class="form-control mb-3" type="password" name="password" placeholder="Password" style="width: 300px">
+      <button type="submit" class="btn btn-primary">Register</button>
+    </form>
+  </main>
   <!-- Bootstrap JS -->
   <script
     src="https://code.jquery.com/jquery-3.3.1.slim.min.js"

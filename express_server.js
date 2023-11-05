@@ -17,7 +17,7 @@ app.use(cookieSession({
 
   // Cookie Options
   maxAge: 24 * 60 * 60 * 1000 // 24 hours
-}))
+}));
 
 app.use(express.urlencoded({ extended: true }));
 
@@ -31,7 +31,7 @@ const bcrypt = require("bcryptjs");
 const { generateRandomString, getUserByEmail, urlsForUser} = require('./helpers');
 
 
-  // DATA //
+// DATA //
 
 
 // New database with ID
@@ -62,7 +62,7 @@ const users = {
 };
 
 
-  // GET //
+// GET //
 
 
 app.get("/urls.json", (req, res) => {
@@ -139,7 +139,7 @@ app.get("/u/:id", (req, res) => {
 
 });
 
-// Edit ID page 
+// Edit ID page
 app.get("/urls/:id", (req, res) => {
   const id = req.params.id;
   const userID = req.session.user_id;
@@ -165,7 +165,7 @@ app.get("/urls/:id", (req, res) => {
 });
 
 
-  // POST //
+// POST //
 
 
 // Generates new ID and ads it to the URL database
@@ -266,7 +266,7 @@ app.post("/register", (req, res) => {
   const newId = generateRandomString();
   const email = req.body.email;
   const password = req.body.password;
-  const salt = bcrypt.genSaltSync(10)
+  const salt = bcrypt.genSaltSync(10);
   const hash = bcrypt.hashSync(password, salt);
  
   if (email === '' || password === '') {
