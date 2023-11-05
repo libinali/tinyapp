@@ -1,16 +1,30 @@
+// Express
 const express = require("express");
-const morgan = require("morgan");
 const app = express();
-const cookieParser = require("cookie-parser");
+
+// Port
 const PORT = 8080; // default port 8080
 
-app.set("view engine", "ejs");
+// Morgan
+const morgan = require("morgan");
 app.use(morgan('dev'));
-app.use(express.urlencoded({ extended: true }));
+
+// Cookie parser
+const cookieParser = require("cookie-parser");
 app.use(cookieParser());
+app.use(express.urlencoded({ extended: true }));
 
-// DATA //
+// Ejs
+app.set("view engine", "ejs");
 
+// Bcryptjs
+const bcrypt = require("bcryptjs");
+
+
+  // DATA //
+
+
+// New database with ID
 const urlDatabase = {
   b6UTxQ: {
     longURL: "https://www.tsn.ca",
@@ -23,6 +37,7 @@ const urlDatabase = {
   },
 };
 
+// User database
 const users = {
   lola: {
     id: 'lola',
@@ -37,7 +52,8 @@ const users = {
 };
 
 
-// HELPER FUNCTION //
+  // HELPER FUNCTION //
+
 
 const generateRandomString = function() {
   const char = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
@@ -49,7 +65,7 @@ const generateRandomString = function() {
   }
 
   return randomString;
-}
+};
 
 const getUserByEmail = function(email) {
   
@@ -71,23 +87,21 @@ const urlsForUser = function(id) {
     }
   }
   return userURLs;
-}
+};
 
 
-// GET //
+  // GET //
+
 
 app.get("/urls.json", (req, res) => {
   res.json(urlDatabase);
 });
 
 app.get("/", (req, res) => {
-  res.send("Hello!");
+  res.send("Hello! Welcome to TinyAPP!");
 });
 
-app.get("/hello", (req, res) => {
-  res.send("<html><body>Hello <b>World</b></body></html>\n");
-});
-
+// Main Page
 app.get("/urls", (req, res) => {
   const userID = req.cookies.user_id;
   const user = users[userID];
@@ -102,6 +116,7 @@ app.get("/urls", (req, res) => {
   res.render("urls_index", templateVars);
 });
 
+// Create new URL Page
 app.get("/urls/new", (req, res) => {
   const userID = req.cookies.user_id;
 
@@ -113,6 +128,7 @@ app.get("/urls/new", (req, res) => {
   res.render("urls_new", templateVars);
 });
 
+// Register Page
 app.get("/register", (req, res) => {
   const userID = req.cookies.user_id;
   const user = users[userID];
@@ -125,6 +141,7 @@ app.get("/register", (req, res) => {
   res.render("register", templateVars);
 });
 
+// Login Page
 app.get("/login", (req, res) => {
   const userID = req.cookies.user_id;
   const user = users[userID];
@@ -137,7 +154,7 @@ app.get("/login", (req, res) => {
   res.render("login", templateVars);
 });
 
-
+// ID redirection to long URL
 app.get("/u/:id", (req, res) => {
   const id = req.params.id;
   const url = urlDatabase[id];
@@ -150,6 +167,7 @@ app.get("/u/:id", (req, res) => {
 
 });
 
+// Edit ID page 
 app.get("/urls/:id", (req, res) => {
   const id = req.params.id;
   const userID = req.cookies.user_id;
@@ -174,8 +192,11 @@ app.get("/urls/:id", (req, res) => {
 
 });
 
-// POST //
 
+  // POST //
+
+
+// Generates new ID and ads it to the URL database
 app.post("/urls", (req, res) => {
   const userId = req.cookies.user_id;
 
@@ -194,6 +215,7 @@ app.post("/urls", (req, res) => {
   }
 });
 
+// Deletes URL
 app.post("/urls/:id/delete", (req, res) => {
   const id = req.params.id;
   const userID = req.cookies.user_id;
@@ -211,11 +233,12 @@ app.post("/urls/:id/delete", (req, res) => {
   if (url.userID !== userID) {
     return res.status(404).send('Not Authorized');
   }
-  
+
   delete urlDatabase[id];
   res.redirect("/urls");
 });
 
+// Edits and updates URLs
 app.post("/urls/:id/update", (req, res) => {
   const id = req.params.id;
   const userID = req.cookies.user_id;
@@ -238,10 +261,11 @@ app.post("/urls/:id/update", (req, res) => {
   res.redirect("/urls");
 });
 
+// Authenticates User
 app.post("/login", (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
-
+  
   console.log(email, password);
 
   const user = getUserByEmail(email);
@@ -251,7 +275,9 @@ app.post("/login", (req, res) => {
     return res.status(403).send("User Not Found");
   }
   
-  if (user.password !== password) {
+  const result = bcrypt.compareSync(password, user.password);
+
+  if (!result) {
     return res.status(403).send("Incorrect Password");
   }
   
@@ -259,15 +285,19 @@ app.post("/login", (req, res) => {
   res.redirect("/urls");
 });
 
+// Logouts User
 app.post("/logout", (req, res) => {
   res.clearCookie('user_id');
   res.redirect("/login");
 });
 
+// Registers User
 app.post("/register", (req, res) => {
   const newId = generateRandomString();
   const email = req.body.email;
   const password = req.body.password;
+  const salt = bcrypt.genSaltSync(10)
+  const hash = bcrypt.hashSync(password, salt);
  
   if (email === '' || password === '') {
     return res.status(400).send("Email and password cannot be empty");
@@ -282,8 +312,9 @@ app.post("/register", (req, res) => {
   const newUser = {
     id: newId,
     email: req.body.email,
-    password: req.body.password,
+    password: hash,
   };
+
   users[newId] = newUser;
   console.log(users);
 
