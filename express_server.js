@@ -9,9 +9,16 @@ const PORT = 8080; // default port 8080
 const morgan = require("morgan");
 app.use(morgan('dev'));
 
-// Cookie parser
-const cookieParser = require("cookie-parser");
-app.use(cookieParser());
+// Cookie Session
+const cookieSession = require("cookie-session");
+app.use(cookieSession({
+  name: 'session',
+  keys: ['lololololol'],
+
+  // Cookie Options
+  maxAge: 24 * 60 * 60 * 1000 // 24 hours
+}))
+
 app.use(express.urlencoded({ extended: true }));
 
 // Ejs
@@ -19,6 +26,9 @@ app.set("view engine", "ejs");
 
 // Bcryptjs
 const bcrypt = require("bcryptjs");
+
+// Helper functions
+const { generateRandomString, getUserByEmail, urlsForUser} = require('./helpers');
 
 
   // DATA //
@@ -28,65 +38,27 @@ const bcrypt = require("bcryptjs");
 const urlDatabase = {
   b6UTxQ: {
     longURL: "https://www.tsn.ca",
-    userID: "lola",
+    userID: "Lola",
     
   },
   i3BoGr: {
     longURL: "https://www.google.ca",
-    userID: "moo",
+    userID: "Joe",
   },
 };
 
 // User database
 const users = {
-  lola: {
-    id: 'lola',
+  Lola: {
+    id: 'Lola',
     email: "a@a.com",
-    password: "123",
+    password: "$2a$10$hT7SQowgEq0nUMWVHmXZe.w7XANrA5FRAu8F8BaG6psD7yMIraakK",
   },
-  moo: {
-    id: "moo",
+  Joe: {
+    id: "Joe",
     email: "b@b.com",
-    password: "456",
+    password: "$2a$10$/3/tty0NvKMg7CxNiJs2yOF0iLfDNXE0cJ96PdPxlznbBbWcBbNkC",
   },
-};
-
-
-  // HELPER FUNCTION //
-
-
-const generateRandomString = function() {
-  const char = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-  let randomString = '';
-
-  for (let i = 0; i < 6; i++) {
-    const randomIndex = Math.floor(Math.random() * char.length);
-    randomString += char[randomIndex];
-  }
-
-  return randomString;
-};
-
-const getUserByEmail = function(email) {
-  
-  for (const id in users) {
-    const user = users[id];
-    if (user.email === email) {
-      return user;
-    }
-  }
-
-  return null;
-};
-
-const urlsForUser = function(id) {
-  const userURLs = {};
-  for (const tinyURL in urlDatabase) {
-    if (urlDatabase[tinyURL].userID === id) {
-      userURLs[tinyURL] = urlDatabase[tinyURL];
-    }
-  }
-  return userURLs;
 };
 
 
@@ -103,9 +75,9 @@ app.get("/", (req, res) => {
 
 // Main Page
 app.get("/urls", (req, res) => {
-  const userID = req.cookies.user_id;
+  const userID = req.session.user_id;
   const user = users[userID];
-  const userURLs = urlsForUser(userID);
+  const userURLs = urlsForUser(userID, urlDatabase);
 
   if (!user) {
     return res.status(404).send('Please login or register');
@@ -118,7 +90,7 @@ app.get("/urls", (req, res) => {
 
 // Create new URL Page
 app.get("/urls/new", (req, res) => {
-  const userID = req.cookies.user_id;
+  const userID = req.session.user_id;
 
   if (!userID || !users[userID]) {
     res.redirect("/login");
@@ -130,7 +102,7 @@ app.get("/urls/new", (req, res) => {
 
 // Register Page
 app.get("/register", (req, res) => {
-  const userID = req.cookies.user_id;
+  const userID = req.session.user_id;
   const user = users[userID];
 
   if (userID && users[userID]) {
@@ -143,11 +115,11 @@ app.get("/register", (req, res) => {
 
 // Login Page
 app.get("/login", (req, res) => {
-  const userID = req.cookies.user_id;
+  const userID = req.session.user_id;
   const user = users[userID];
 
   if (userID && users[userID]) {
-    res.redirect("/urls");
+    return res.redirect("/urls");
   }
 
   const templateVars = { user };
@@ -170,7 +142,7 @@ app.get("/u/:id", (req, res) => {
 // Edit ID page 
 app.get("/urls/:id", (req, res) => {
   const id = req.params.id;
-  const userID = req.cookies.user_id;
+  const userID = req.session.user_id;
   const user = users[userID];
   const url = urlDatabase[id];
 
@@ -198,7 +170,7 @@ app.get("/urls/:id", (req, res) => {
 
 // Generates new ID and ads it to the URL database
 app.post("/urls", (req, res) => {
-  const userId = req.cookies.user_id;
+  const userId = req.session.user_id;
 
   if (!userId || !users[userId]) {
     return res.status(403).send("Please login or register to create new URLs.");
@@ -218,7 +190,7 @@ app.post("/urls", (req, res) => {
 // Deletes URL
 app.post("/urls/:id/delete", (req, res) => {
   const id = req.params.id;
-  const userID = req.cookies.user_id;
+  const userID = req.session.user_id;
   const user = users[userID];
   const url = urlDatabase[id];
 
@@ -241,7 +213,7 @@ app.post("/urls/:id/delete", (req, res) => {
 // Edits and updates URLs
 app.post("/urls/:id/update", (req, res) => {
   const id = req.params.id;
-  const userID = req.cookies.user_id;
+  const userID = req.session.user_id;
   const user = users[userID];
   const url = urlDatabase[id];
 
@@ -265,10 +237,8 @@ app.post("/urls/:id/update", (req, res) => {
 app.post("/login", (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
-  
-  console.log(email, password);
 
-  const user = getUserByEmail(email);
+  const user = getUserByEmail(email, users);
   console.log(user);
 
   if (!user) {
@@ -281,13 +251,13 @@ app.post("/login", (req, res) => {
     return res.status(403).send("Incorrect Password");
   }
   
-  res.cookie('user_id', user.id);
+  req.session.user_id = user.id;
   res.redirect("/urls");
 });
 
 // Logouts User
 app.post("/logout", (req, res) => {
-  res.clearCookie('user_id');
+  req.session = null;
   res.redirect("/login");
 });
 
@@ -303,7 +273,7 @@ app.post("/register", (req, res) => {
     return res.status(400).send("Email and password cannot be empty");
   }
 
-  const existingId = getUserByEmail(email);
+  const existingId = getUserByEmail(email, users);
 
   if (existingId) {
     return res.status(400).send("Email is already in use");
@@ -318,7 +288,7 @@ app.post("/register", (req, res) => {
   users[newId] = newUser;
   console.log(users);
 
-  res.cookie('user_id', newId);
+  req.session.user_id = newUser.id;
   res.redirect("/urls");
 });
 
